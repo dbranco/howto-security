@@ -21,3 +21,29 @@ The suggestion in stackoverflow needed to have some points in consideration:
     1. The **securityMatcher** will tell the Exchange chain if the authentication should be applied using this method
     1. After the **authorizeExchange** you decide the access strategy and to which resources will apply
     
+# Running the project
+
+You can run the project using the command:
+```shell
+./gradlew bootRun
+```
+
+The task is already configured to read the .envVar file where you should provide the Okta configuration.
+
+# Setup an Okta account
+
+1. Go to https://developer.okta.com/
+2. Create an account (you can use Google or GitHub)
+3. Login
+4. In the side menu Directory -> People you can add a dummy user
+5. Go applications using side menu Application -> Applications
+6. Click on "Create App Integration"
+7. Choose OIDC option, next
+8. Choose Web Application option in case of server side
+9. Provide the application name
+10. In the "Sign-in redirect URIs" add http://localhost:8080/login/oauth2/code/okta
+11. Click on save button
+12. In your recently created application you can see:
+    - Under the General tab the Client Id, Client Secret 
+    - Under the Sign On tab the Issuer url
+    - These are the data you should provide in the .envVar file

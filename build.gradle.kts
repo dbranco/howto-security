@@ -1,4 +1,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.Properties
+import java.io.FileInputStream
+import kotlin.collections.mutableMapOf
+import java.lang.RuntimeException
 
 plugins {
     id("org.springframework.boot") version "2.5.3"
@@ -27,7 +31,9 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+
     developmentOnly("org.springframework.boot:spring-boot-devtools")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.springframework.security:spring-security-test")
@@ -42,4 +48,26 @@ tasks.withType<KotlinCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+fun localBootRunProperties(): MutableMap<String, Any> {
+    val envVarirables = Properties()
+    envVarirables.load(FileInputStream(file(project.projectDir).absolutePath + "/.envVar"))
+
+    val mapProperties = mutableMapOf<String, Any>()
+
+    for (eachEntry in envVarirables.entries) {
+        if (eachEntry.value.toString().isBlank()) {
+            throw RuntimeException("Provide the value for ${eachEntry.key.toString()}")
+        }
+        mapProperties.put(eachEntry.key.toString(), eachEntry.value.toString())
+    }
+
+    return mapProperties
+}
+
+tasks.bootRun {
+    doFirst {
+        systemProperties = localBootRunProperties()
+    }
 }
