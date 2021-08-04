@@ -2,20 +2,30 @@
 server:
   port: 8080
 
-spring:
-  security:
-    oauth2:
-      client:
-        provider:
-          okta:
-            issuer-uri: ${OKTA_APP_ISSUER}
-        registration:
-          okta:
-            client-id: ${OKTA_APP_CLIENT_ID}
-            client-secret: ${OKTA_APP_CLIENT_SECRET}
-            authorization-grant-type: client_credentials
-            scope: openid
-      resourceserver:
-        jwt:
-          issuer-uri: ${OKTA_APP_ISSUER}
+okta:
+  oauth2:
+    issuer: ${OKTA_APP_ISSUER}
+    client-id: ${OKTA_APP_CLIENT_ID}
+    client-secret: ${OKTA_APP_CLIENT_SECRET}
+
+# These properties cover a broader case, since we are using the okta-spring-boot-starter dependency
+# the starter will build everything that you need, and even better will handle the OAuth2 exception for you
+# redirecting you back to Okta login page
+
+#spring:
+#  security:
+#    oauth2:
+#      client:
+#        provider:
+#          okta:
+#            issuer-uri: ${OKTA_APP_ISSUER}
+#        registration:
+#          okta:
+#            client-id: ${OKTA_APP_CLIENT_ID}
+#            client-secret: ${OKTA_APP_CLIENT_SECRET}
+#            authorization-grant-type: client_credentials
+#            scope: openid
+#      resourceserver:
+#        jwt:
+#          issuer-uri: ${OKTA_APP_ISSUER}
 

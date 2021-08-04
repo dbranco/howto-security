@@ -7,17 +7,13 @@ import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.authorization.AuthorizationDecision
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.core.Authentication
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
-import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoders
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.authentication.HttpStatusServerEntryPoint
-import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers.pathMatchers
 import org.springframework.web.reactive.config.EnableWebFlux
 import reactor.core.publisher.Mono
@@ -34,7 +30,7 @@ class SecurityConfig {
     @Order(1)
     fun permitAllWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         return http
-            .httpBasic().disable()
+//            .httpBasic().disable()
             .securityMatcher(pathMatchers("/permitall/**"))
             .authorizeExchange()
             .pathMatchers("/permitall/**").permitAll()
@@ -53,7 +49,15 @@ class SecurityConfig {
                 }
             }
             .exceptionHandling()
-            .authenticationEntryPoint(HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED))
+// If you only send back the 401 Status you have to provide the Authorization header, but browser won't aware you about
+// that, but if you add the WWW-Authenticate=Basic... it will pops thr browser form asking for credentials
+//            .authenticationEntryPoint(HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED))
+            .authenticationEntryPoint { exchange, ex ->
+                Mono.fromRunnable {
+                    exchange.response.headers.set("WWW-Authenticate", "Basic realm=dummy")
+                    exchange.response.statusCode = HttpStatus.UNAUTHORIZED
+                }
+            }
             .and()
             .build()
     }
@@ -62,19 +66,20 @@ class SecurityConfig {
     @Order(3)
     fun oAuthWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         return http
-            .httpBasic().disable()
-            .securityMatcher(pathMatchers("/secureoauth/**"))
-            .authorizeExchange { spec ->
-                run {
-                    spec.pathMatchers("/secureoauth/**").authenticated()
-                }
-            }
+//            .httpBasic().disable()
+// These 2 "/login/**", "/oauth2/**" patterns were needed to let you been login using Okta
+//            .securityMatcher(pathMatchers("/login/**", "/oauth2/**","/secureoauth/**"))
+            .authorizeExchange().anyExchange().authenticated().and()
             .oauth2ResourceServer(
                 ServerHttpSecurity.OAuth2ResourceServerSpec::jwt
             )
-            .exceptionHandling()
-            .authenticationEntryPoint(HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED))
-            .and().build()
+// This is only needed for a broader case.
+// For this case using Okta if you don't handle the exception, the Okta libraries are prepared to handle it for you
+// redirecting to their login page
+//            .exceptionHandling()
+//            .authenticationEntryPoint(HttpStatusServerEntryPoint(HttpStatus.UNAUTHORIZED))
+//            .and()
+            .build()
     }
 
     private fun basicAuthenticationDummyAuthentication(it: Authentication?) = when (it) {
